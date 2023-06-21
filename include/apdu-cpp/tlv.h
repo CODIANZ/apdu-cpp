@@ -171,6 +171,28 @@ public:
       if(size() != 8) throw std::runtime_error("invalid length");
       return (static_cast<uint64_t>(data().raw_data_ptr()[0]) << 56) | (static_cast<uint64_t>(data().raw_data_ptr()[1]) << 48) | (static_cast<uint64_t>(data().raw_data_ptr()[2]) << 40) | (static_cast<uint64_t>(data().raw_data_ptr()[3]) << 32) | (static_cast<uint64_t>(data().raw_data_ptr()[4]) << 24) | (static_cast<uint64_t>(data().raw_data_ptr()[5]) << 16) | (static_cast<uint64_t>(data().raw_data_ptr()[6]) << 8) | static_cast<uint64_t>(data().raw_data_ptr()[7]);
     }
+
+    template <typename T> T as_integer() const throw(std::runtime_error) {
+      if(!is_valid()) throw std::runtime_error("invalid value");
+      if(size() > sizeof(T)) throw std::runtime_error("invalid length");
+      T value = 0;
+      for(int i = 0; i < size(); i++) {
+        value <<= 8;
+        value |= data().raw_data_ptr()[i];
+      }
+      return value;
+    }
+
+    uint64_t as_uint() const throw(std::runtime_error) {
+      if(!is_valid()) throw std::runtime_error("invalid value");
+      if(size() > 8) throw std::runtime_error("invalid length");
+      uint64_t value = 0;
+      for(int i = 0; i < size(); i++) {
+        value <<= 8;
+        value |= data().raw_data_ptr()[i];
+      }
+      return value;
+    }
   };
 
 private:
