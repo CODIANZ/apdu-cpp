@@ -267,6 +267,15 @@ public:
     }
     return result;
   }
+
+  tlv find_first_child(const tag& tag) const {
+    for(const auto& child : m_children){
+      if(child.get_tag() == tag){
+        return child;
+      }
+    }
+    return tlv();
+  }
 };
 
 } /** namespace apdu_cpp */
