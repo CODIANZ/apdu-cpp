@@ -1,7 +1,4 @@
-#include <data_chunk.h>
-#include <tlv_descriptor.h>
-#include <tlv.h>
-#include <rapdu.h>
+#include <apdu-cpp/apdu-cpp.h>
 #include <iostream>
 
 using namespace apdu_cpp;
