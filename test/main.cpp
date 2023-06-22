@@ -21,7 +21,7 @@ void test_rapdu()
     "6F2B800205A0810205A082013983020000841074656D702D6B65796C6F61642E637274850100860100870200009000"
   );
   auto rapdu = rapdu::create(chunk);
-  std::cout << "status word: " << rapdu.get_status_word().data().to_hex_string() << std::endl;
+  std::cout << "status word: " << rapdu.status_word().data().to_hex_string() << std::endl;
   auto _tlv = rapdu.get_tlv();
   {
     std::cout << tlv_descriptor::to_string(_tlv) << std::endl;

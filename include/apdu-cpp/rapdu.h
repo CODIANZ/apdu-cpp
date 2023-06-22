@@ -15,12 +15,11 @@ public:
   private:
     status_word() {}
     status_word(data_chunk data) : data_chunk_holder(data) {}
-    static status_word create(const tlv& tlv, const data_chunk& src) {
+    static status_word create(const data_chunk& src) {
       do{
-        if(!tlv) break;
         if(!src) break;
-        if(src.size() < (tlv.size() + 2)) break;
-        return status_word(src.get_range(tlv.size(), 2));
+        if(src.size() < 2) break;
+        return status_word(src);
       } while(false);
       return status_word();
     }
@@ -45,15 +44,27 @@ public:
       if(!is_valid()) return std::string();
       return data().to_hex_string();
     }
+
+    bool is_valid() const {
+      return data().size() == 2;
+    }
+
+    operator bool() const {
+      return is_valid();
+    }
+
+    bool is_ok() const {
+      return sw1() == 0x90 && sw2() == 0x00;
+    }
   };
 
 private:
-  const tlv         m_tlv;
+  const data_chunk  m_data;
   const status_word m_status_word;
 
-  rapdu() {}
-  template<typename TLV, typename STATUS_WORD> rapdu(TLV&& tlv, STATUS_WORD&& sw) :
-    m_tlv(std::forward<TLV>(tlv)),
+  rapdu() : m_data(data_chunk::invalid()) {}
+  template<typename DATA, typename STATUS_WORD> rapdu(DATA&& data, STATUS_WORD&& sw) :
+    m_data(std::forward<DATA>(data)),
     m_status_word(std::forward<STATUS_WORD>(sw))
   {}
 
@@ -62,29 +73,31 @@ protected:
 public:
   static rapdu create(const data_chunk& src) {
     if(!src) return rapdu();
-    const auto tlv = tlv::create(src);
-    const auto sw = status_word::create(tlv, src);
-    return rapdu(tlv, sw);
+    if(src.size() < 2) return rapdu();
+
+    const auto data = src.get_range(0, src.size() - 2);
+    const auto sw = src.get_range(src.size() - 2, 2);
+    return rapdu(data, sw);
   }
-  
+
   bool is_valid() const {
-    return m_tlv && m_status_word;
+    return m_status_word;
   }
 
   operator bool() const {
     return is_valid();
   }
 
-  std::size_t size() const {
-    return m_tlv.size() + m_status_word.size();
-  }
-
-  const tlv& get_tlv() const {
-    return m_tlv;
-  }
-
-  const status_word& get_status_word() const {
+  const status_word& status_word() const {
     return m_status_word;
+  }
+
+  const data_chunk& data() const {
+    return m_data;
+  }
+
+  tlv get_tlv() const {
+    return tlv::create(m_data);
   }
 };
 
