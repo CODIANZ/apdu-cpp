@@ -69,10 +69,10 @@ public:
       return !is_constructed();
     }
 
-    bool operator == (const data_chunk& rhs) const {
+    bool operator == (const tag& rhs) const {
       if(!is_valid()) return false;
       if(!rhs) return false;
-      return std::equal(data().cbegin(), data().cend(), rhs.cbegin(), rhs.cend());
+      return std::equal(data().cbegin(), data().cend(), rhs.data().cbegin(), rhs.data().cend());
     }
   };
 
