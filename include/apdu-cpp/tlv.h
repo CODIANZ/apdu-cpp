@@ -20,7 +20,7 @@ public:
 
     static tag create(const data_chunk& src) {
       do{
-        if(!src) break;
+        if(!src.is_valid()) break;
         auto it = src.cbegin();
         if(it == src.cend()) break;
         if((*it & 0x1F) != 0x1F) {
@@ -68,12 +68,6 @@ public:
       if(!is_valid()) return false;
       return !is_constructed();
     }
-
-    bool operator == (const tag& rhs) const {
-      if(!is_valid()) return false;
-      if(!rhs) return false;
-      return std::equal(data().cbegin(), data().cend(), rhs.data().cbegin(), rhs.data().cend());
-    }
   };
 
   struct tag_hash {
@@ -93,8 +87,8 @@ public:
 
     static length create(const tag& tag, const data_chunk& src){
       do{
-        if(!tag) break;
-        if(!src) break;
+        if(!tag.is_valid()) break;
+        if(!src.is_valid()) break;
         return create(src.get_range(tag.size(), src.size() - tag.size()));
       } while(false);
       return length();
@@ -102,7 +96,7 @@ public:
 
     static length create(const data_chunk& src) {
       do{
-        if(!src) break;
+        if(!src.is_valid()) break;
         auto it = src.cbegin();
         if(it == src.cend()) break;
         if(*it & 0x80) {
@@ -128,7 +122,7 @@ public:
     }
   protected:
   public:
-    uint64_t get_length() const { return m_value_length; }
+    uint64_t get_value_length() const { return m_value_length; }
   };
 
   class value : public data_chunk_holder {
@@ -138,61 +132,16 @@ public:
     value(data_chunk data) : data_chunk_holder(data) {}
     static value create(const tag& tag, const length& length, const data_chunk& src) {
       do{
-        if(!tag) break;
-        if(!length) break;
-        if(!src) break;
-        if(src.size() < (tag.size() + length.size() + length.get_length())) break;
-        return value(src.get_range(tag.size() + length.size(), length.get_length()));
+        if(!tag.is_valid()) break;
+        if(!length.is_valid()) break;
+        if(!src.is_valid()) break;
+        if(src.size() < (tag.size() + length.size() + length.get_value_length())) break;
+        return value(src.get_range(tag.size() + length.size(), length.get_value_length()));
       } while(false);
       return value();
     }
   protected:
   public:
-    uint8_t as_uint8() const throw(std::runtime_error) {
-      if(!is_valid()) throw std::runtime_error("invalid value");
-      if(size() != 1) throw std::runtime_error("invalid length");
-      return data().raw_data_ptr()[0];
-    }
-
-    uint16_t as_uint16() const throw(std::runtime_error) {
-      if(!is_valid()) throw std::runtime_error("invalid value");
-      if(size() != 2) throw std::runtime_error("invalid length");
-      return (data().raw_data_ptr()[0] << 8) | data().raw_data_ptr()[1];
-    }
-
-    uint32_t as_uint32() const throw(std::runtime_error) {
-      if(!is_valid()) throw std::runtime_error("invalid value");
-      if(size() != 4) throw std::runtime_error("invalid length");
-      return (data().raw_data_ptr()[0] << 24) | (data().raw_data_ptr()[1] << 16) | (data().raw_data_ptr()[2] << 8) | data().raw_data_ptr()[3];
-    }
-
-    uint64_t as_uint64() const throw(std::runtime_error) {
-      if(!is_valid()) throw std::runtime_error("invalid value");
-      if(size() != 8) throw std::runtime_error("invalid length");
-      return (static_cast<uint64_t>(data().raw_data_ptr()[0]) << 56) | (static_cast<uint64_t>(data().raw_data_ptr()[1]) << 48) | (static_cast<uint64_t>(data().raw_data_ptr()[2]) << 40) | (static_cast<uint64_t>(data().raw_data_ptr()[3]) << 32) | (static_cast<uint64_t>(data().raw_data_ptr()[4]) << 24) | (static_cast<uint64_t>(data().raw_data_ptr()[5]) << 16) | (static_cast<uint64_t>(data().raw_data_ptr()[6]) << 8) | static_cast<uint64_t>(data().raw_data_ptr()[7]);
-    }
-
-    template <typename T> T as_integer() const throw(std::runtime_error) {
-      if(!is_valid()) throw std::runtime_error("invalid value");
-      if(size() > sizeof(T)) throw std::runtime_error("invalid length");
-      T value = 0;
-      for(int i = 0; i < size(); i++) {
-        value <<= 8;
-        value |= data().raw_data_ptr()[i];
-      }
-      return value;
-    }
-
-    uint64_t as_uint() const throw(std::runtime_error) {
-      if(!is_valid()) throw std::runtime_error("invalid value");
-      if(size() > 8) throw std::runtime_error("invalid length");
-      uint64_t value = 0;
-      for(int i = 0; i < size(); i++) {
-        value <<= 8;
-        value |= data().raw_data_ptr()[i];
-      }
-      return value;
-    }
   };
 
 private:
@@ -212,7 +161,7 @@ private:
       auto it = m_value.data().cbegin();
       while(it != m_value.data().cend()){
         const auto child = tlv::create(m_value.data().get_range(it - m_value.data().cbegin(), m_value.data().cend() - it));
-        if(!child) break;
+        if(!child.is_valid()) break;
         m_children.push_back(child);
         it += child.size();
       }
@@ -223,7 +172,7 @@ protected:
 
 public:
   static tlv create(const data_chunk& src) {
-    if(!src) return tlv();
+    if(!src.is_valid()) return tlv();
     const auto tag = tag::create(src);
     const auto length = length::create(tag, src);
     const auto  value = value::create(tag, length, src);
@@ -231,11 +180,7 @@ public:
   }
   
   bool is_valid() const {
-    return m_tag && m_length && m_value;
-  }
-
-  operator bool() const {
-    return is_valid();
+    return m_tag.is_valid() && m_length.is_valid() && m_value.is_valid();
   }
 
   std::size_t size() const {
