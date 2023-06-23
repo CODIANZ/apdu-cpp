@@ -17,7 +17,7 @@ public:
     status_word(data_chunk data) : data_chunk_holder(data) {}
     static status_word create(const data_chunk& src) {
       do{
-        if(!src) break;
+        if(!src.is_valid()) break;
         if(src.size() < 2) break;
         return status_word(src);
       } while(false);
@@ -49,10 +49,6 @@ public:
       return data().size() == 2;
     }
 
-    operator bool() const {
-      return is_valid();
-    }
-
     bool is_ok() const {
       return sw1() == 0x90 && sw2() == 0x00;
     }
@@ -72,7 +68,7 @@ protected:
 
 public:
   static rapdu create(const data_chunk& src) {
-    if(!src) return rapdu();
+    if(!src.is_valid()) return rapdu();
     if(src.size() < 2) return rapdu();
 
     const auto data = src.get_range(0, src.size() - 2);
@@ -81,19 +77,15 @@ public:
   }
 
   bool is_valid() const {
-    return m_status_word;
-  }
-
-  operator bool() const {
-    return is_valid();
-  }
-
-  const status_word& status_word() const {
-    return m_status_word;
+    return m_data.is_valid() && m_status_word.is_valid();
   }
 
   const data_chunk& data() const {
     return m_data;
+  }
+
+  const status_word& status_word() const {
+    return m_status_word;
   }
 
   tlv get_tlv() const {

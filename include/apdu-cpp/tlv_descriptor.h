@@ -48,7 +48,7 @@ public:
       << _i << " - is_constructed: " << (tlv.get_tag().is_constructed() ? "true" : "false") << std::endl
       << _i << " - is_primitive: " << (tlv.get_tag().is_primitive() ? "true" : "false") << std::endl
       << _i << "length:" << tlv.get_length().data().to_hex_string()
-            << "(" << tlv.get_length().get_length() << ")" << std::endl
+            << "(" << tlv.get_length().get_value_length() << ")" << std::endl
       << _i << "value: " << tlv.get_value().data().to_hex_string() << std::endl;
 
     if(tlv.get_children().empty()) return;
